@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>เธงเธฑเธ”เธเธงเธฒเธกเธซเธเธฒเธเธฃเธตเธเธญเธฃเนเธก (เธกเธดเธฅเธฅเธดเน€เธกเธ•เธฃ) เธเธฒเธเธ เธฒเธเธ–เนเธฒเธข</title>
+<style>
+  :root { --gap: 10px; --border: #ddd; --accent: #0b5fff; --danger:#c62828; }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background:#fafafa; color:#222; }
+  header { padding: 12px 16px; background:#fff; border-bottom:1px solid var(--border); position: sticky; top:0; z-index:5;}
+  header h1 { margin:0 0 6px; font-size: 18px; }
+  header .subtitle { color:#666; font-size: 13px; }
+  main { display:grid; grid-template-columns: 340px 1fr; gap: var(--gap); padding: var(--gap); }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  .panel { background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px; }
+  .group { margin-bottom: 14px; }
+  .group h3 { margin: 0 0 8px; font-size: 14px; color:#333; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items: center; }
+  button, input[type="number"], input[type="text"] {
+    padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:14px;
+  }
+  button { cursor:pointer; }
+  button.primary { border-color: var(--accent); color:#fff; background: var(--accent); }
+  button.ghost { background:#f3f6ff; border-color:#d9e3ff; }
+  button.warn { background:#ffe9e9; border-color:#ffc7c7; color:#8a1f1f; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .hint { color:#666; font-size:12px; line-height:1.5; }
+  .badge { display:inline-block; padding:2px 6px; border-radius:999px; background:#eef3ff; color:#2947d1; font-size:12px; }
+  .canvas-wrap { position: relative; background:#111; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+  canvas { display:block; width:100%; height:auto; background:#222; }
+  .overlay { position:absolute; inset:0; pointer-events:none; }
+  .statusbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px 10px; font-size:12px; border-top:1px solid var(--border); background:#fff; color:#444; }
+  .key { background:#eee; border:1px solid #ddd; border-radius:6px; padding:0 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .tbl { width:100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th, .tbl td { border-bottom:1px solid #eee; padding:8px; text-align:left; }
+  .pill { padding:2px 8px; border-radius:999px; font-size:12px; }
+  .ok { background:#e7f6ee; color:#0b7a32; }
+  .no { background:#fde8e8; color:#8a1f1f; }
+  .mm { font-weight:600; color:#0b5fff; }
+  .magnifier {
+    position:absolute; width:140px; height:140px; border-radius:50%; border:2px solid #fff; overflow:hidden;
+    box-shadow:0 6px 12px rgba(0,0,0,.35); display:none; pointer-events:none; z-index:4;
+  }
+  .magnifier canvas { width:100%; height:100%; image-rendering: pixelated; }
+  .legend { font-size:12px; color:#666; }
+  .flex-split { display:flex; gap:10px; }
+  .flex-split > div { flex:1; }
+  .hr { height:1px; background:#eee; margin:10px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>เธงเธฑเธ”เธเธงเธฒเธกเธซเธเธฒเธเธฃเธตเธเธญเธฃเนเธก (เธซเธเนเธงเธขเธกเธดเธฅเธฅเธดเน€เธกเธ•เธฃ) เธเธฒเธเธ เธฒเธเธ–เนเธฒเธข</h1>
+  <div class="subtitle">1) เน€เธเธดเธ”เธเธฅเนเธญเธเธซเธฃเธทเธญเธญเธฑเธเนเธซเธฅเธ”เธฃเธนเธ 2) เธงเธฒเธ”เน€เธชเนเธเธเธฒเธฅเธดเน€เธเธฃเธ•เธ”เนเธงเธขเธเธงเธฒเธกเธขเธฒเธงเธ—เธตเนเธ—เธฃเธฒเธ (เธกเธก.) 3) เธงเธฒเธ”เน€เธชเนเธเธงเธฑเธ”เธเธงเธฒเธกเธซเธเธฒเนเธ”เนเน€เธฅเธข</div>
+</header>
+
+<main>
+  <!-- Sidebar -->
+  <aside class="panel">
+    <div class="group">
+      <h3>เนเธซเธฅเนเธเธ เธฒเธ</h3>
+      <div class="row">
+        <button id="btnStartCam" class="primary">เน€เธฃเธดเนเธกเธเธฅเนเธญเธ</button>
+        <button id="btnStopCam">เธซเธขเธธเธ”เธเธฅเนเธญเธ</button>
+        <button id="btnFreeze" class="ghost">เนเธเนเธ เธฒเธ</button>
+      </div>
+      <div class="row" style="margin-top:6px;">
+        <input type="file" id="fileInput" accept="image/*" />
+        <button id="btnClear">เธฅเนเธฒเธเธ เธฒเธ</button>
+      </div>
+      <div class="hint">เธซเธกเธฒเธขเน€เธซเธ•เธธ: เธเธฒเธฃเน€เธเนเธฒเธ–เธถเธเธเธฅเนเธญเธเธ•เนเธญเธเน€เธเธดเธ”เธเนเธฒเธ HTTPS/localhost เนเธฅเธฐเน€เธเธฃเธฒเธงเนเน€เธเธญเธฃเนเธฃเธญเธเธฃเธฑเธ <code>getUserMedia</code></div>
+    </div>
+
+    <div class="group">
+      <h3>เธเธฒเธฅเธดเน€เธเธฃเธ•เธชเน€เธเธฅ (เธชเธณเธเธฑเธ)</h3>
+      <div class="row">
+        <span class="badge">เนเธซเธกเธ”เธเธฒเธฅเธดเน€เธเธฃเธ•</span>
+        <button id="btnModeCal" class="ghost">เน€เธเนเธฒเนเธซเธกเธ”</button>
+        <button id="btnModeMeas">เนเธเนเธซเธกเธ”เธงเธฑเธ”</button>
+      </div>
+      <div class="row" style="margin-top:6px;">
+        <input type="number" id="knownLen" placeholder="เนเธชเนเธเธงเธฒเธกเธขเธฒเธงเธญเนเธฒเธเธญเธดเธ (เธกเธก.)" step="0.01" min="0" style="flex:1;" />
+        <button id="btnSetScale" class="primary">เธเธณเธเธงเธ“เธชเน€เธเธฅ</button>
+      </div>
+      <div class="hint">เธเธฑเนเธเธ•เธญเธ: เธงเธฒเธ”เน€เธชเนเธเธ—เธฒเธเธงเธฑเธ•เธ–เธธเธ—เธตเนเธฃเธนเนเธเธงเธฒเธกเธขเธฒเธง (เน€เธเนเธ เธชเน€เธเธฅเธเธฑเธ•เธฃ/เน€เธงเธญเธฃเนเน€เธเธตเธขเธฃเน) เนเธฅเนเธงเธเธฃเธญเธเธเนเธฒเธกเธก. เน€เธเธทเนเธญเธชเธฃเนเธฒเธเธชเน€เธเธฅเธเธดเธเน€เธเธฅโ’เธกเธก.</div>
+      <div class="row" style="margin-top:6px;">
+        <div>เธชเน€เธเธฅเธเธฑเธเธเธธเธเธฑเธ: <span id="scaleLabel" class="mm">เธขเธฑเธเนเธกเนเธ•เธฑเนเธ</span></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>เธงเธฑเธ”เธเธงเธฒเธกเธซเธเธฒ/เธฃเธฐเธขเธฐ</h3>
+      <div class="row">
+        <span class="badge">เนเธซเธกเธ”เธงเธฑเธ”</span>
+        <button id="btnSnapMeasure" class="ghost">เน€เธฃเธดเนเธกเธงเธฑเธ”</button>
+        <button id="btnUndo">เธขเนเธญเธเธเธฅเธฑเธ</button>
+        <button id="btnResetAll" class="warn">เธฅเนเธฒเธเธ—เธฑเนเธเธซเธกเธ”</button>
+      </div>
+      <div class="row" style="margin-top:6px;">
+        <button id="btnExport">เธเธฑเธเธ—เธถเธเธเธฅ (CSV)</button>
+        <input type="text" id="noteField" placeholder="เนเธเนเธ•/เธ•เธณเนเธซเธเนเธ" />
+      </div>
+      <div class="hint">เธ—เธฃเธดเธ: เธเธ”/เธฅเธฒเธเน€เธเธทเนเธญเธงเธฑเธ” 1 เน€เธชเนเธ เธเธฅเนเธญเธขเน€เธกเธฒเธชเนเน€เธเธทเนเธญเธเธณเธเธงเธ“ เธฃเธฐเธขเธฐเธเธฐเนเธชเธ”เธเน€เธเนเธเธกเธก. เธกเธตเนเธงเนเธเธเธขเธฒเธขเธเนเธงเธขเน€เธฅเนเธเธเธฅเธฒเธขเน€เธชเนเธ</div>
+    </div>
+
+    <div class="group">
+      <h3>เธชเธ–เธฒเธเธฐ</h3>
+      <div class="row"><div>เนเธซเธกเธ”: <span id="modeLabel" class="pill ok">เธเธฒเธฅเธดเน€เธเธฃเธ•</span></div></div>
+      <div class="row"><div id="camStatus" class="pill no">เธเธฅเนเธญเธ: เธเธดเธ”</div></div>
+      <div class="row"><div id="imgStatus" class="pill no">เธ เธฒเธ: เนเธกเนเธกเธต</div></div>
+      <div class="row"><div class="legend">เธเธงเธฒเธกเธฅเธฐเน€เธญเธตเธขเธ”เนเธเธเธงเธฒเธช: <span id="resLabel">-</span></div></div>
+    </div>
+
+    <div class="group">
+      <h3>เธเธนเนเธกเธทเธญเธชเธฑเนเธเน</h3>
+      <ol class="hint" style="margin:0; padding-left:18px;">
+        <li>เธเธฑเธ”เธงเธฒเธเธเธฃเธตเธเธญเธฃเนเธกเธเธฑเธเธ•เธฑเธงเธญเนเธฒเธเธญเธดเธเธเธงเธฒเธกเธขเธฒเธงเนเธเน€เธเธฃเธกเน€เธ”เธตเธขเธงเธเธฑเธ (เน€เธเนเธ เน€เธงเธญเธฃเนเน€เธเธตเธขเธฃเน/เนเธกเนเธเธฃเธฃเธ—เธฑเธ”)</li>
+        <li>เนเธเนเธ เธฒเธ โ–ถ เน€เธเนเธฒเนเธซเธกเธ”เธเธฒเธฅเธดเน€เธเธฃเธ• โ–ถ เธฅเธฒเธเน€เธชเนเธเธ—เธฑเธเธเธงเธฒเธกเธขเธฒเธงเธ—เธตเนเธ—เธฃเธฒเธ โ–ถ เธเธฃเธญเธเธกเธก. โ–ถ โ€เธเธณเธเธงเธ“เธชเน€เธเธฅโ€</li>
+        <li>เน€เธเนเธฒเนเธซเธกเธ”เธงเธฑเธ” โ–ถ เธฅเธฒเธเน€เธชเนเธเธเนเธฒเธกเธเธงเธฒเธกเธซเธเธฒเธ—เธตเนเธ•เนเธญเธเธเธฒเธฃ โ–ถ เธญเนเธฒเธเธเนเธฒเธกเธก.</li>
+      </ol>
+    </div>
+  </aside>
+
+  <!-- Canvas area -->
+  <section class="panel">
+    <div class="canvas-wrap" id="canvasWrap">
+      <video id="video" playsinline style="display:none;"></video>
+      <canvas id="canvas" width="1920" height="1080"></canvas>
+      <canvas id="overlay" class="overlay"></canvas>
+      <div id="magnifier" class="magnifier"><canvas id="magCanvas" width="140" height="140"></canvas></div>
+    </div>
+    <div class="statusbar">
+      <div>เน€เธเธฃเธทเนเธญเธเธกเธทเธญ: 
+        <span class="key">เธเธฒเธฅเธดเน€เธเธฃเธ•</span> เธงเธฒเธ”เน€เธชเนเธเธญเนเธฒเธเธญเธดเธ โ’
+        <span class="key">เธงเธฑเธ”</span> เธงเธฒเธ”เน€เธชเนเธเธงเธฑเธ” โ’
+        <span class="key">Shift</span> เธเธฑเธเธเธฑเธเน€เธชเนเธเนเธเธงเธเธญเธ/เธ•เธฑเนเธ
+      </div>
+      <div style="margin-left:auto;">เธ•เธณเนเธซเธเนเธเน€เธกเธฒเธชเน: <span id="coordLabel">- , -</span></div>
+    </div>
+
+    <div class="panel" style="margin-top:10px;">
+      <h3 style="margin:0 0 8px;">เธเธฅเธเธฒเธฃเธงเธฑเธ”</h3>
+      <div class="hr"></div>
+      <table class="tbl" id="resultTable">
+        <thead>
+          <tr><th>#</th><th>เนเธซเธกเธ”</th><th>เธเธดเธเน€เธเธฅ (px)</th><th>เธกเธดเธฅเธฅเธดเน€เธกเธ•เธฃ (mm)</th><th>เนเธเนเธ•</th><th>เธเธดเธเธฑเธ”</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const overlay = document.getElementById('overlay');
+  const ctx = canvas.getContext('2d');
+  const octx = overlay.getContext('2d');
+
+  const mag = document.getElementById('magnifier');
+  const magCanvas = document.getElementById('magCanvas');
+  const magCtx = magCanvas.getContext('2d');
+
+  const btnStartCam = document.getElementById('btnStartCam');
+  const btnStopCam = document.getElementById('btnStopCam');
+  const btnFreeze = document.getElementById('btnFreeze');
+  const fileInput = document.getElementById('fileInput');
+  const btnClear = document.getElementById('btnClear');
+
+  const btnModeCal = document.getElementById('btnModeCal');
+  const btnModeMeas = document.getElementById('btnModeMeas');
+  const btnSnapMeasure = document.getElementById('btnSnapMeasure');
+  const btnUndo = document.getElementById('btnUndo');
+  const btnResetAll = document.getElementById('btnResetAll');
+
+  const knownLen = document.getElementById('knownLen');
+  const btnSetScale = document.getElementById('btnSetScale');
+  const scaleLabel = document.getElementById('scaleLabel');
+
+  const modeLabel = document.getElementById('modeLabel');
+  const camStatus = document.getElementById('camStatus');
+  const imgStatus = document.getElementById('imgStatus');
+  const resLabel = document.getElementById('resLabel');
+  const coordLabel = document.getElementById('coordLabel');
+
+  const btnExport = document.getElementById('btnExport');
+  const noteField = document.getElementById('noteField');
+  const resultTable = document.getElementById('resultTable').querySelector('tbody');
+
+  let stream = null;
+  let drawing = false;
+  let startPt = null;
+  let curPt = null;
+  let frozen = false;
+  let mode = 'calibrate'; // 'calibrate' | 'measure'
+  let pxPerMM = null; // pixels per 1 mm
+  let results = [];
+  let history = [];
+  let lastFrameSize = {w: canvas.width, h: canvas.height};
+
+  function setMode(m) {
+    mode = m;
+    modeLabel.textContent = m === 'calibrate' ? 'เธเธฒเธฅเธดเน€เธเธฃเธ•' : 'เธงเธฑเธ”';
+    modeLabel.className = 'pill ' + (m === 'calibrate' ? 'ok' : 'ok');
+    // small visual cue
+    overlay.style.outline = m === 'calibrate' ? '2px dashed #6aa1ff' : '2px dashed #46b36a';
+    drawOverlay();
+  }
+
+  function updateResLabel() {
+    resLabel.textContent = `${canvas.width} ร— ${canvas.height} px`;
+  }
+
+  function setCamStatus(on) {
+    camStatus.textContent = on ? 'เธเธฅเนเธญเธ: เน€เธเธดเธ”' : 'เธเธฅเนเธญเธ: เธเธดเธ”';
+    camStatus.className = 'pill ' + (on ? 'ok' : 'no');
+  }
+
+  function setImgStatus(has) {
+    imgStatus.textContent = has ? 'เธ เธฒเธ: เธเธฃเนเธญเธก' : 'เธ เธฒเธ: เนเธกเนเธกเธต';
+    imgStatus.className = 'pill ' + (has ? 'ok' : 'no');
+  }
+
+  function clearCanvas() {
+    ctx.fillStyle = '#222';
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+    drawOverlay(true);
+  }
+
+  function drawOverlay(reset=false) {
+    octx.clearRect(0,0,overlay.width, overlay.height);
+    if (reset) return;
+
+    if (startPt && curPt) {
+      octx.lineWidth = 2;
+      octx.strokeStyle = mode === 'calibrate' ? '#6aa1ff' : '#39d27a';
+      octx.setLineDash([6,4]);
+      octx.beginPath();
+      octx.moveTo(startPt.x, startPt.y);
+      octx.lineTo(curPt.x, curPt.y);
+      octx.stroke();
+      octx.setLineDash([]);
+
+      // length preview
+      const dx = curPt.x - startPt.x;
+      const dy = curPt.y - startPt.y;
+      const px = Math.hypot(dx, dy);
+      const mm = (pxPerMM ? (px / pxPerMM) : 0);
+      const label = mode === 'calibrate'
+        ? `${px.toFixed(2)} px`
+        : `${mm.toFixed(2)} mm (${px.toFixed(1)} px)`;
+      drawLabelMid(startPt, curPt, label);
+    }
+  }
+
+  function midpoint(a,b){ return {x:(a.x+b.x)/2, y:(a.y+b.y)/2}; }
+
+  function drawLabelMid(a, b, text) {
+    const m = midpoint(a,b);
+    octx.font = '12px system-ui, sans-serif';
+    octx.fillStyle = 'rgba(0,0,0,.55)';
+    const pad=4;
+    const w = octx.measureText(text).width + pad*2;
+    const h = 18;
+    octx.fillRect(m.x - w/2, m.y - h - 8, w, h);
+    octx.fillStyle = '#fff';
+    octx.fillText(text, m.x - w/2 + pad, m.y - 8 - (h/2) + 4);
+  }
+
+  function toCanvasPos(evt) {
+    const rect = overlay.getBoundingClientRect();
+    const x = (evt.clientX - rect.left) * (overlay.width / rect.width);
+    const y = (evt.clientY - rect.top) * (overlay.height / rect.height);
+    return {x,y};
+  }
+
+  function snapIfShift(pt, evt) {
+    if (!evt.shiftKey || !startPt) return pt;
+    const dx = pt.x - startPt.x;
+    const dy = pt.y - startPt.y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      return {x: pt.x, y: startPt.y}; // horizontal
+    } else {
+      return {x: startPt.x, y: pt.y}; // vertical
+    }
+  }
+
+  function updateMagnifier(evt){
+    const rect = overlay.getBoundingClientRect();
+    const cx = evt.clientX - rect.left;
+    const cy = evt.clientY - rect.top;
+
+    // show & position
+    mag.style.display = 'block';
+    mag.style.left = (cx - mag.offsetWidth/2) + 'px';
+    mag.style.top  = (cy - mag.offsetHeight - 12) + 'px';
+
+    // sample from main canvas around cursor
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const sx = (evt.clientX - rect.left) * scaleX;
+    const sy = (evt.clientY - rect.top) * scaleY;
+    const radius = 40; // sample radius
+    const sx0 = Math.max(0, Math.floor(sx - radius));
+    const sy0 = Math.max(0, Math.floor(sy - radius));
+    const sw = Math.min(canvas.width - sx0, radius*2);
+    const sh = Math.min(canvas.height - sy0, radius*2);
+
+    // draw zoomed region
+    magCtx.clearRect(0,0,magCanvas.width, magCanvas.height);
+    magCtx.imageSmoothingEnabled = false;
+    magCtx.drawImage(canvas, sx0, sy0, sw, sh, 0, 0, magCanvas.width, magCanvas.height);
+
+    // crosshair
+    magCtx.strokeStyle = '#00ffff';
+    magCtx.lineWidth = 1;
+    magCtx.beginPath();
+    magCtx.moveTo(magCanvas.width/2, 0);
+    magCtx.lineTo(magCanvas.width/2, magCanvas.height);
+    magCtx.moveTo(0, magCanvas.height/2);
+    magCtx.lineTo(magCanvas.width, magCanvas.height/2);
+    magCtx.stroke();
+  }
+
+  function hideMagnifier(){ mag.style.display='none'; }
+
+  function addResult({kind, px, mm, note, a, b}) {
+    results.push({kind, px, mm, note, a, b});
+    const tr = document.createElement('tr');
+    const idx = results.length;
+    tr.innerHTML = `
+      <td>${idx}</td>
+      <td>${kind === 'cal' ? 'เธเธฒเธฅเธดเน€เธเธฃเธ•' : 'เธงเธฑเธ”'}</td>
+      <td>${px.toFixed(2)}</td>
+      <td>${mm ? mm.toFixed(2) : '-'}</td>
+      <td>${note || ''}</td>
+      <td>(${a.x.toFixed(1)}, ${a.y.toFixed(1)}) โ’ (${b.x.toFixed(1)}, ${b.y.toFixed(1)})</td>
+    `;
+    resultTable.appendChild(tr);
+  }
+
+  function exportCSV() {
+    if (!results.length) { alert('เธขเธฑเธเนเธกเนเธกเธตเธเธฅเธเธฒเธฃเธงเธฑเธ”'); return; }
+    const header = ['index','mode','pixels','millimeters','note','ax','ay','bx','by'];
+    const lines = [header.join(',')];
+    results.forEach((r,i)=>{
+      lines.push([
+        i+1,
+        r.kind === 'cal' ? 'calibrate' : 'measure',
+        r.px.toFixed(4),
+        r.mm ? r.mm.toFixed(4) : '',
+        `"${(r.note||'').replace(/"/g,'""')}"`,
+        r.a.x.toFixed(2), r.a.y.toFixed(2),
+        r.b.x.toFixed(2), r.b.y.toFixed(2)
+      ].join(','));
+    });
+    const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'measurements_mm.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // Camera handling
+  async function startCamera(){
+    try{
+      // Try high resolution forเธ”เธตเธเธฃเธตเธเธงเธฒเธกเธฅเธฐเน€เธญเธตเธขเธ”
+      const constraints = {
+        video: {
+          width: { ideal: 1920 },
+          height:{ ideal: 1080 },
+          facingMode: 'environment'
+        },
+        audio: false
+      };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      video.srcObject = stream;
+      await video.play();
+
+      // resize canvas to actual video size
+      const vw = video.videoWidth || 1920;
+      const vh = video.videoHeight || 1080;
+      canvas.width = vw; canvas.height = vh;
+      overlay.width = vw; overlay.height = vh;
+      updateResLabel();
+      setCamStatus(true);
+      setImgStatus(true);
+      frozen = false;
+      // start drawing frames
+      requestAnimationFrame(drawVideoFrame);
+    } catch(e){
+      console.error(e);
+      alert('เนเธกเนเธชเธฒเธกเธฒเธฃเธ–เน€เธเธดเธ”เธเธฅเนเธญเธเนเธ”เน เธเธฃเธธเธ“เธฒเธญเธเธธเธเธฒเธ•เธชเธดเธ—เธเธดเนเธเธฅเนเธญเธ เธซเธฃเธทเธญเนเธเนเน€เธเธฃเธฒเธงเนเน€เธเธญเธฃเนเธ—เธตเนเธฃเธญเธเธฃเธฑเธ');
+      setCamStatus(false);
+    }
+  }
+
+  function stopCamera(){
+    if (stream) {
+      stream.getTracks().forEach(t=>t.stop());
+      stream = null;
+    }
+    setCamStatus(false);
+  }
+
+  function drawVideoFrame(){
+    if (stream && !frozen) {
+      // fit video to canvas size (1:1)
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    }
+    // loop
+    if (stream) requestAnimationFrame(drawVideoFrame);
+  }
+
+  // Freeze frame
+  function freezeFrame(){
+    if (!stream) return;
+    frozen = !frozen;
+    btnFreeze.textContent = frozen ? 'เธขเธเน€เธฅเธดเธเนเธเนเธ เธฒเธ' : 'เนเธเนเธ เธฒเธ';
+  }
+
+  // File upload
+  fileInput.addEventListener('change', (e)=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    const img = new Image();
+    img.onload = ()=>{
+      // Resize canvas to image
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      overlay.width = img.naturalWidth;
+      overlay.height = img.naturalHeight;
+      ctx.drawImage(img, 0, 0);
+      setImgStatus(true);
+      updateResLabel();
+      stopCamera();
+    };
+    img.src = URL.createObjectURL(f);
+  });
+
+  btnClear.addEventListener('click', ()=>{
+    clearCanvas();
+    setImgStatus(false);
+  });
+
+  // Interactions
+  overlay.addEventListener('mousedown', (evt)=>{
+    if (!hasImage()) return;
+    drawing = true;
+    const p = toCanvasPos(evt);
+    startPt = p;
+    curPt = p;
+    drawOverlay();
+  });
+
+  overlay.addEventListener('mousemove', (evt)=>{
+    const p = toCanvasPos(evt);
+    coordLabel.textContent = `${p.x.toFixed(1)} , ${p.y.toFixed(1)}`;
+    if (!hasImage()) { hideMagnifier(); return; }
+    updateMagnifier(evt);
+
+    if (!drawing) return;
+    curPt = snapIfShift(p, evt);
+    drawOverlay();
+  });
+
+  overlay.addEventListener('mouseup', (evt)=>{
+    if (!drawing) return;
+    drawing = false;
+    hideMagnifier();
+    const end = toCanvasPos(evt);
+    curPt = snapIfShift(end, evt);
+    const dx = curPt.x - startPt.x;
+    const dy = curPt.y - startPt.y;
+    const px = Math.hypot(dx, dy);
+    if (px < 2) { drawOverlay(true); startPt=null; curPt=null; return; }
+
+    if (mode === 'calibrate') {
+      history.push({type:'cal', a:startPt, b:curPt, px});
+      addResult({kind:'cal', px, mm:null, note:(noteField.value||''), a:startPt, b:curPt});
+      alert('เน€เธชเนเธเธเธฒเธฅเธดเน€เธเธฃเธ•เธ–เธนเธเธชเธฃเนเธฒเธเนเธฅเนเธง เนเธชเนเธเนเธฒเธกเธดเธฅเธฅเธดเน€เธกเธ•เธฃเธเธญเธเน€เธชเนเธเธเธตเนเนเธเธเนเธญเธ โ€เธเธงเธฒเธกเธขเธฒเธงเธญเนเธฒเธเธญเธดเธ (เธกเธก.)โ€ เนเธฅเนเธงเธเธ” โ€เธเธณเธเธงเธ“เธชเน€เธเธฅโ€');
+    } else {
+      if (!pxPerMM) {
+        alert('เธขเธฑเธเนเธกเนเนเธ”เนเธเธฒเธฅเธดเน€เธเธฃเธ•เธชเน€เธเธฅ! เนเธเธฃเธ”เนเธเธ—เธตเนเนเธซเธกเธ”เธเธฒเธฅเธดเน€เธเธฃเธ•เธเนเธญเธ');
+      } else {
+        const mm = px / pxPerMM;
+        history.push({type:'meas', a:startPt, b:curPt, px, mm});
+        addResult({kind:'meas', px, mm, note:(noteField.value||''), a:startPt, b:curPt});
+      }
+    }
+    startPt = null; curPt = null;
+    drawOverlay(true);
+  });
+
+  overlay.addEventListener('mouseleave', hideMagnifier);
+
+  function hasImage(){
+    // check if canvas contains content (by tracking lastFrameSize or a flag)
+    return true; // we allow measuring once any image/camera frame drawn
+  }
+
+  // Buttons
+  btnStartCam.addEventListener('click', startCamera);
+  btnStopCam.addEventListener('click', ()=>{ stopCamera(); });
+  btnFreeze.addEventListener('click', freezeFrame);
+
+  btnModeCal.addEventListener('click', ()=> setMode('calibrate'));
+  btnModeMeas.addEventListener('click', ()=> setMode('measure'));
+  btnSnapMeasure.addEventListener('click', ()=> setMode('measure'));
+
+  btnSetScale.addEventListener('click', ()=>{
+    const lastCal = [...history].reverse().find(h=>h.type==='cal');
+    const mm = parseFloat(knownLen.value);
+    if (!lastCal) { alert('เธขเธฑเธเนเธกเนเธกเธตเน€เธชเนเธเธเธฒเธฅเธดเน€เธเธฃเธ• เนเธเธฃเธ”เธงเธฒเธ”เน€เธชเนเธเธญเนเธฒเธเธญเธดเธเธเนเธญเธ'); return; }
+    if (!(mm>0)) { alert('เธเธฃเธธเธ“เธฒเธเธฃเธญเธเธเนเธฒเธเธงเธฒเธกเธขเธฒเธงเธญเนเธฒเธเธญเธดเธเน€เธเนเธเธกเธก. (>0)'); return; }
+    pxPerMM = lastCal.px / mm; // pixels per 1 mm
+    scaleLabel.textContent = `${(1/pxPerMM).toFixed(4)} mm/px  |  ${pxPerMM.toFixed(3)} px/mm`;
+    scaleLabel.className = 'mm';
+    setMode('measure');
+  });
+
+  btnUndo.addEventListener('click', ()=>{
+    if (!history.length) return;
+    const h = history.pop();
+    results.pop();
+    resultTable.removeChild(resultTable.lastElementChild);
+    if (h.type==='cal' && history.every(x=>x.type!=='cal')) {
+      pxPerMM = null;
+      scaleLabel.textContent = 'เธขเธฑเธเนเธกเนเธ•เธฑเนเธ';
+    }
+  });
+
+  btnResetAll.addEventListener('click', ()=>{
+    if (!confirm('เธฅเนเธฒเธเธชเน€เธเธฅเนเธฅเธฐเธเธฅเธเธฒเธฃเธงเธฑเธ”เธ—เธฑเนเธเธซเธกเธ”?')) return;
+    results = [];
+    history = [];
+    resultTable.innerHTML = '';
+    pxPerMM = null;
+    scaleLabel.textContent = 'เธขเธฑเธเนเธกเนเธ•เธฑเนเธ';
+    drawOverlay(true);
+  });
+
+  btnExport.addEventListener('click', exportCSV);
+
+  // Resize overlay to match canvas CSS size
+  const wrap = document.getElementById('canvasWrap');
+  function resizeOverlayToCanvasCSS(){
+    // keep overlay same pixel size as canvas
+    overlay.width = canvas.width;
+    overlay.height = canvas.height;
+  }
+  window.addEventListener('resize', resizeOverlayToCanvasCSS);
+  resizeOverlayToCanvasCSS();
+
+  // Initialize
+  clearCanvas();
+  setMode('calibrate');
+  updateResLabel();
+})();
+</script>
+</body>
+</html>
